@@ -55,7 +55,7 @@ class EchoBot extends ActivityHandler {
                 }
             }
             function appendAllResponse(item, index) {
-                replyText += "\n " + item + ": ";
+                replyText += "\n " + item.replace(item.substr(0, 1), item.substr(0, 1).toUpperCase()) + " : ";
                 if (!carslist[item] || typeof carslist[item] == 'undefined') {
                     replyText += "No resource is currently available.";
                 } else {
@@ -67,7 +67,7 @@ class EchoBot extends ActivityHandler {
                     // replyText = JSON.stringify(carslist);
                     Object.keys(carslist).forEach(appendAllResponse);
                 } else if ('help' == context.activity.text.toLowerCase() || "hi"  == context.activity.text.toLowerCase() || "hello" == context.activity.text.toLowerCase() || (context.activity.text.toLowerCase().search("hi ") > -1) || (context.activity.text.toLowerCase().search("hello ") > -1)) {
-                    replyText = "Bot-commands: help, php , python, node.js, angular, java, all";
+                    replyText = "Bot-commands: help, php, python, node.js, angular, java, all";
                 } else if (domains.indexOf(context.activity.text.toLowerCase()) > -1) {
                     replyText = "No resource is currently available.";
                 } else {
@@ -84,7 +84,7 @@ class EchoBot extends ActivityHandler {
 
         this.onMembersAdded(async (context, next) => {
             const membersAdded = context.activity.membersAdded;
-            const welcomeText = 'Hello and welcome! \n Bot-commands: help, php , python, node.js, angular, java, all';
+            const welcomeText = 'Hello and welcome! \n Bot-commands: help, php, python, node.js, angular, java, all';
             for (let cnt = 0; cnt < membersAdded.length; ++cnt) {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
                     await context.sendActivity(MessageFactory.text(welcomeText, welcomeText));
