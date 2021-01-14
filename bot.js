@@ -32,7 +32,7 @@ class EchoBot extends ActivityHandler {
         // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
         this.onMessage(async (context, next) => {
             var replyText = "";
-            var domains = ["php", "node.js", "python", "angular", "java"];
+            var domains = ["php", "node.js", "python", "angular", "java", "outsystems"];
 			/* if (context.activity.text == "Ford") {
 				replyText = "Ikon, Car, Jeep, Truck.";
 			} elseif (context.activity.text == "Mercedes") {
