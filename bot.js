@@ -3,80 +3,75 @@
 
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const axios = require('axios');
-var carslist = "";
+var replyText = "";
+var domains = ["php", "nodejs", "python", "angular", "java", "outsystems"];
 
-var callbacksuccess = function (responsedata) {
-    carslist = responsedata;
-    // console.log(carslist.Ford);
+function checkMatch(domainslist, context, item, index) {
+    if (item == context.toLowerCase() || (context.toLowerCase().search(item) > -1)) {
+        if (!(domainslist[item]) || typeof domainslist[item] == 'undefined') {
+            replyText = "No resource is currently available.";
+        } else {
+            replyText = domainslist[item];                
+        }
+    }
 }
-// Make a request for a user with a given ID
-axios.get('http://nipmtest.rfldev.com/botdata.json', {
-  // Axios looks for the `auth` option, and, if it is set, formats a
-  // basic auth header for you automatically.
-  auth: {
-    username: 'rdev020',
-    password: 'd$pakt0'
-  }
-}).then(function (response) {
-    // handle success
-    //console.log(response.data);
-    callbacksuccess(response.data);
-  }).catch(function (error) {
-    // handle error
-    console.log("Not-working");
-  });
+
+function appendAllResponse(domainslist, item, index) {
+    replyText += "\n " + item.replace(item.substr(0, 1), item.substr(0, 1).toUpperCase()) + " : ";
+    if (!domainslist[item] || typeof domainslist[item] == 'undefined') {
+         replyText += "No resource is currently available.";
+    } else {
+        replyText += domainslist[item];
+    }
+}    
+    
+function processData(response, context) {         
+    var domainslist = response;
+   
+    replyText = "";
+        
+    if (typeof domainslist == 'string') {
+        domainslist = domainslist.replace(", }", "}");
+        domainslist = domainslist.replace(",}", "}");
+        domainslist = JSON.parse(domainslist);
+     
+    }
+    Object.keys(domainslist).forEach(function(item, index) {
+        checkMatch(domainslist, context, item, index);
+    });
+    
+    if (!replyText) {
+        if ('all' == context.toLowerCase()) {
+    
+            Object.keys(domainslist).forEach(function(item, index) {
+                appendAllResponse(domainslist, item, index);
+            });
+    
+        } else if ('help' == context.toLowerCase() || "hi"  == context.toLowerCase() || "hello" == context.toLowerCase() || (context.toLowerCase().search("hi ") > -1) || (context.toLowerCase().search("hello ") > -1)) {
+            replyText = "Bot-commands: help, php, python, nodejs, angular, java, all, etc.";
+        } else if (domains.indexOf(context.toLowerCase()) > -1) {
+            replyText = "No resource is currently available.";
+        } else {
+                // replyText = `Echo: ${ context.activity.text }`;
+            replyText = "Invalid command."
+        }
+    }   
+}  
 
 class EchoBot extends ActivityHandler {
     constructor() {
         super();
         // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
         this.onMessage(async (context, next) => {
-            var replyText = "";
-            var domains = ["php", "node.js", "python", "angular", "java", "outsystems"];
-			/* if (context.activity.text == "Ford") {
-				replyText = "Ikon, Car, Jeep, Truck.";
-			} elseif (context.activity.text == "Mercedes") {
-				replyText = "Benz, S-Class, Z-Class, F-Class, Sedan.";
-			} else {
-				replyText = `Echo-message: ${ context.activity.text }`;
-            } */
-            
-            Object.keys(carslist).forEach(checkMatch);
-            
-            function checkMatch(item, index) {
-                // console.log(item);
-                if (item == context.activity.text.toLowerCase() || (context.activity.text.toLowerCase().search(item) > -1)) {
-                    if (!(carslist[item]) || typeof carslist[item] == 'undefined') {
-                        replyText = "No resource is currently available.";
-                    } else {
-                        
-                        replyText = carslist[item];                
-                    }
-                }
-            }
-            function appendAllResponse(item, index) {
-                replyText += "\n " + item.replace(item.substr(0, 1), item.substr(0, 1).toUpperCase()) + " : ";
-                if (!carslist[item] || typeof carslist[item] == 'undefined') {
-                    replyText += "No resource is currently available.";
-                } else {
-                    replyText += carslist[item];
-                }
-            }
-            if (!replyText) {
-                if ('all' == context.activity.text.toLowerCase()) {
-                    // replyText = JSON.stringify(carslist);
-                    Object.keys(carslist).forEach(appendAllResponse);
-                } else if ('help' == context.activity.text.toLowerCase() || "hi"  == context.activity.text.toLowerCase() || "hello" == context.activity.text.toLowerCase() || (context.activity.text.toLowerCase().search("hi ") > -1) || (context.activity.text.toLowerCase().search("hello ") > -1)) {
-                    replyText = "Bot-commands: help, php, python, node.js, angular, java, all";
-                } else if (domains.indexOf(context.activity.text.toLowerCase()) > -1) {
-                    replyText = "No resource is currently available.";
-                } else {
-                    
+            var inputCommand = context.activity.text;
+            await axios.get('https://reflectionsglobal.com/rs/bot/data.json')
+            .then(function (response) {
+                processData(response.data, inputCommand);
                 
-                // replyText = `Echo: ${ context.activity.text }`;
-                    replyText = "Invalid command."
-                }
-            }
+            }).catch(function (error) {
+                console.log(error);
+            });
+
             await context.sendActivity(MessageFactory.text(replyText, replyText));
             // By calling next() you ensure that the next BotHandler is run.
             await next();
