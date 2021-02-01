@@ -25,8 +25,12 @@ function appendAllResponse(domainslist, item, index) {
     }
 }    
     
-function processData(response, context) {         
-    var domainslist = response;
+function processData(response, context) {
+	if (typeof response == undefined || typeof response.data == undefined || (typeof response.data != 'string' && typeof response.data != 'object') || (typeof response.data == 'string' && response.data.length == 0)) {
+		replyText = "Data not available.";
+		return;
+	}
+    var domainslist = response.data;
    
     replyText = "";
         
@@ -36,6 +40,10 @@ function processData(response, context) {
         domainslist = JSON.parse(domainslist);
      
     }
+	if (typeof domainslist != "object") {
+		replyText = "Data not available.";
+		return;
+	}
     Object.keys(domainslist).forEach(function(item, index) {
         checkMatch(domainslist, context, item, index);
     });
@@ -47,8 +55,6 @@ function processData(response, context) {
                 appendAllResponse(domainslist, item, index);
             });
     
-        } else if ('help' == context.toLowerCase() || "hi"  == context.toLowerCase() || "hello" == context.toLowerCase() || (context.toLowerCase().search("hi ") > -1) || (context.toLowerCase().search("hello ") > -1)) {
-            replyText = "Bot-commands: help, php, python, nodejs, angular, java, all, etc.";
         } else if (domains.indexOf(context.toLowerCase()) > -1) {
             replyText = "No resource is currently available.";
         } else {
@@ -58,20 +64,29 @@ function processData(response, context) {
     }   
 }  
 
+function errorData() {
+	replyText = "Data not available.";
+}
+
 class EchoBot extends ActivityHandler {
     constructor() {
         super();
         // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
         this.onMessage(async (context, next) => {
-            var inputCommand = context.activity.text;
-            await axios.get('https://reflectionsglobal.com/rs/bot/data.json')
-            .then(function (response) {
-                processData(response.data, inputCommand);
-                
-            }).catch(function (error) {
-                console.log(error);
-            });
-
+			if ('help' == context.activity.text.toLowerCase() || "hi"  == context.activity.text.toLowerCase() || "hello" == context.activity.text.toLowerCase() || (context.activity.text.toLowerCase().search("hi ") > -1) || (context.activity.text.toLowerCase().search("hello") > -1) ||
+				(context.activity.text.toLowerCase().search("help") > -1)) {
+				replyText = "Bot-commands: help, php, python, nodejs, angular, java, all, etc.";
+			} else {
+				var inputCommand = context.activity.text;
+				await axios.get('https://reflectionsglobal.com/rs/bot/data.json')
+				.then(function (response) {
+					processData(response, inputCommand);
+					
+				}).catch(function (error) {
+					//console.log(error);
+					errorData();
+				});
+			}
             await context.sendActivity(MessageFactory.text(replyText, replyText));
             // By calling next() you ensure that the next BotHandler is run.
             await next();
